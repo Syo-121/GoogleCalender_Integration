@@ -1,5 +1,5 @@
 # GoogleCalender_Integration
-昨日の詳細，導入方法等は![ブログ]()をご覧ください．
+機能の詳細，導入方法等は[ブログ](https://zenn.dev/syosyo/articles/a096520dd55ec5)をご覧ください．
 
 ## 主な機能と特徴
 - **カレンダーの集約**
