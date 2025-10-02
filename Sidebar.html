@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body { font-family: sans-serif; padding: 0 15px; }
+      h3 { border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+      .calendar-list { margin-bottom: 20px; }
+      .calendar-item { display: block; margin-bottom: 8px; }
+      label { margin-left: 5px; }
+      button { padding: 8px 15px; border-radius: 4px; border: none; cursor: pointer; }
+      #save { background-color: #4285F4; color: white; }
+      #status { margin-top: 10px; font-size: 0.9em; color: green; }
+    </style>
+  </head>
+  <body>
+    <h3>同期元のカレンダーを選択</h3>
+    <div id="source-list" class="calendar-list"><p>読み込み中...</p></div>
+    <h3>集約先のカレンダーを選択</h3>
+    <div id="target-list" class="calendar-list"><p>読み込み中...</p></div>
+    <button id="save">設定を保存</button>
+    <p id="status"></p>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        google.script.run.withSuccessHandler(populateLists).getCalendarList();
+        google.script.run.withSuccessHandler(applySettings).getSettings();
+      });
+      function populateLists(calendars) {
+        const sourceList = document.getElementById('source-list');
+        const targetList = document.getElementById('target-list');
+        sourceList.innerHTML = '';
+        targetList.innerHTML = '';
+        calendars.forEach(cal => {
+          sourceList.innerHTML += `<div class="calendar-item"><input type="checkbox" id="source-${cal.id}" value="${cal.id}"><label for="source-${cal.id}">${cal.name}</label></div>`;
+          if (cal.isOwned) {
+            targetList.innerHTML += `<div class="calendar-item"><input type="radio" id="target-${cal.id}" name="target" value="${cal.id}"><label for="target-${cal.id}">${cal.name}</label></div>`;
+          }
+        });
+      }
+      function applySettings(settings) {
+        if (settings.sourceIds) {
+          settings.sourceIds.forEach(id => {
+            const checkbox = document.getElementById(`source-${id}`);
+            if (checkbox) checkbox.checked = true;
+          });
+        }
+        if (settings.targetId) {
+          const radio = document.getElementById(`target-${settings.targetId}`);
+          if (radio) radio.checked = true;
+        }
+      }
+      document.getElementById('save').addEventListener('click', () => {
+        const sourceIds = Array.from(document.querySelectorAll('#source-list input:checked')).map(el => el.value);
+        const targetRadio = document.querySelector('#target-list input:checked');
+        const targetId = targetRadio ? targetRadio.value : null;
+        if (!targetId || sourceIds.length === 0) {
+          alert('同期元と集約先を両方選択してください。');
+          return;
+        }
+        const settings = { sourceIds, targetId };
+        const statusEl = document.getElementById('status');
+        statusEl.textContent = '保存中...';
+        google.script.run.withSuccessHandler(() => {
+          statusEl.textContent = '設定を保存しました！';
+          setTimeout(() => statusEl.textContent = '', 3000);
+        }).saveSettings(settings);
+      });
+    </script>
+  </body>
+</html>
